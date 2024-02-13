@@ -3,7 +3,7 @@ import logging
 import time
 from typing import Any, List
 
-from embedding.loaders.base import BaseLoader, Document
+from app.embedding.loaders.base import BaseLoader, Document
 from unstructured.partition.auto import partition
 
 logger = logging.getLogger(__name__)

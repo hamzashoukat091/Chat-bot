@@ -31,8 +31,8 @@ def get_model_id(model: str) -> str:
     # Ref: https://docs.aws.amazon.com/bedrock/latest/userguide/model-ids-arns.html
     if model == "claude-v2:1":
         return "anthropic.claude-v2:1"
-    elif model == "claude-instant-v1":
-        return "anthropic.claude-instant-v1"
+    elif model == "claude-v2":
+        return "anthropic.claude-v2"
     else:
         raise NotImplementedError()
 

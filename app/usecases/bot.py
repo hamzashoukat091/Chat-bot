@@ -35,7 +35,7 @@ from app.utils import (
     move_file_in_s3,
 )
 
-DOCUMENT_BUCKET = os.environ.get("DOCUMENT_BUCKET", "bedrock-documents")
+DOCUMENT_BUCKET = os.environ.get("DOCUMENT_BUCKET", "bedrock-documents-v1")
 
 
 def _update_s3_documents_by_diff(
@@ -48,7 +48,7 @@ def _update_s3_documents_by_diff(
     for filename in added_filenames:
         tmp_path = compose_upload_temp_s3_path(user_id, bot_id, filename)
         document_path = compose_upload_document_s3_path(user_id, bot_id, filename)
-        move_file_in_s3(DOCUMENT_BUCKET, tmp_path, document_path)
+        # move_file_in_s3(DOCUMENT_BUCKET, tmp_path, document_path)
 
         # for filename in updated_filenames:
         #     tmp_path = compose_upload_temp_s3_path(user_id, bot_id, filename)
@@ -60,9 +60,9 @@ def _update_s3_documents_by_diff(
 
         # move_file_in_s3(DOCUMENT_BUCKET, tmp_path, document_path)
 
-    for filename in deleted_filenames:
-        document_path = compose_upload_document_s3_path(user_id, bot_id, filename)
-        delete_file_from_s3(DOCUMENT_BUCKET, document_path)
+    # for filename in deleted_filenames:
+    #     document_path = compose_upload_document_s3_path(user_id, bot_id, filename)
+    #     delete_file_from_s3(DOCUMENT_BUCKET, document_path)
 
 
 def create_new_bot(user_id: str, bot_input: BotInput) -> BotOutput:

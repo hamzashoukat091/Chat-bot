@@ -4,26 +4,15 @@ from fastapi import APIRouter, Request
 
 from route_schema import (
     BotInput,
-    BotMetaOutput,
-    BotModifyInput,
     BotOutput,
-    BotPinnedInput,
-    BotPresignedUrlOutput,
-    BotSummaryOutput,
-    BotSwitchVisibilityInput,
     ChatInput,
     ChatOutput,
-    Content,
-    Conversation,
-    ConversationMetaOutput,
-    Knowledge,
-    MessageOutput,
-    NewTitleInput,
-    ProposedTitle,
-    User,
 )
 
 from usecases.chat import chat
+
+from embedding.main import main
+from test import test
 
 from usecases.bot import (
     create_new_bot
@@ -37,7 +26,7 @@ def read_root():
     return {"Hello": "World"}
 
 
-@router.post("/conversation", response_model=ChatOutput)
+@router.post("/conversation")
 def post_message(request: Request, chat_input: ChatInput):
     """Send chat message"""
     # return {"message": chat_input}
@@ -50,6 +39,14 @@ def post_message(request: Request, chat_input: ChatInput):
 @router.post("/bot", response_model=BotOutput)
 def post_bot(request: Request, bot_input: BotInput):
     """Create new private owned bot."""
-    # current_user: User = request.state.current_user
 
-    return create_new_bot('1', bot_input)
+    # current_user: User = request.state.current_user
+    new_bot = create_new_bot('1', bot_input)
+    source_urls = new_bot.knowledge.source_urls
+    sitemap_urls = new_bot.knowledge.sitemap_urls
+    filenames = new_bot.knowledge.filenames
+
+    # main('1', new_bot.id, sitemap_urls, source_urls, filenames)
+    test(new_bot.id, filenames[0])
+
+    return new_bot

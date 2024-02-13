@@ -3,19 +3,17 @@ import json
 import logging
 import os
 
-import boto3
 import pg8000
 import requests
-from app.bedrock import calculate_document_embeddings
 from app.config import EMBEDDING_CONFIG
 from app.repositories.common import _get_table_client
 from app.repositories.custom_bot import compose_bot_id, decompose_bot_id
 from app.route_schema import type_sync_status
 from app.utils import compose_upload_document_s3_path
-from embedding.loaders import UrlLoader
-from embedding.loaders.base import BaseLoader
-from embedding.loaders.s3 import S3FileLoader
-from embedding.wrapper import DocumentSplitter, Embedder
+from app.embedding.loaders.url import UrlLoader
+from app.embedding.loaders.base import BaseLoader
+from app.embedding.loaders.s3 import S3FileLoader
+from app.embedding.wrapper import DocumentSplitter, Embedder
 from llama_index.node_parser import SentenceSplitter
 from ulid import ULID
 
@@ -26,12 +24,12 @@ MODEL_ID = EMBEDDING_CONFIG["model_id"]
 CHUNK_SIZE = EMBEDDING_CONFIG["chunk_size"]
 CHUNK_OVERLAP = EMBEDDING_CONFIG["chunk_overlap"]
 
-DB_NAME = os.environ.get("DB_NAME", "postgres")
-DB_HOST = os.environ.get("DB_HOST", "")
+DB_NAME = os.environ.get("DB_NAME", "chatbot")
+DB_HOST = os.environ.get("DB_HOST", "localhost")
 DB_USER = os.environ.get("DB_USER", "postgres")
-DB_PASSWORD = os.environ.get("DB_PASSWORD", "password")
+DB_PASSWORD = os.environ.get("DB_PASSWORD", "postgres123")
 DB_PORT = int(os.environ.get("DB_PORT", 5432))
-DOCUMENT_BUCKET = os.environ.get("DOCUMENT_BUCKET", "documents")
+DOCUMENT_BUCKET = os.environ.get("DOCUMENT_BUCKET", "bedrock-documents-v1")
 
 METADATA_URI = os.environ.get("ECS_CONTAINER_METADATA_URI_V4")
 
@@ -62,15 +60,14 @@ def insert_to_postgres(
             delete_query = "DELETE FROM items WHERE botid = %s"
             cursor.execute(delete_query, (bot_id,))
 
-            insert_query = f"INSERT INTO items (id, botid, content, source, embedding) VALUES (%s, %s, %s, %s, %s)"
+            insert_query = f"INSERT INTO items (botid, content, source, embedding) VALUES (%s, %s, %s, %s)"
             values_to_insert = []
             for i, (source, content, embedding) in enumerate(
                 zip(sources, contents, embeddings)
             ):
-                id_ = str(ULID())
                 print(f"Preview of content {i}: {content[:200]}")
                 values_to_insert.append(
-                    (id_, bot_id, content, source, json.dumps(embedding))
+                    (bot_id, content, source, json.dumps(embedding))
                 )
             cursor.executemany(insert_query, values_to_insert)
         conn.commit()
@@ -136,7 +133,8 @@ def main(
 ):
     exec_id = ""
     try:
-        exec_id = get_exec_id()
+        # exec_id = get_exec_id()
+        exec_id = '1'
     except Exception as e:
         print(f"[ERROR] Failed to get exec_id: {e}")
         exec_id = "FAILED_TO_GET_ECS_EXEC_ID"

@@ -1,18 +1,18 @@
+
 import logging
 import time
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, List, Optional
 
-from embedding.loaders.base import BaseLoader, Document
+from app.embedding.loaders.base import BaseLoader, Document
 
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from playwright.async_api import Browser as AsyncBrowser
     from playwright.async_api import Page as AsyncPage
-    from playwright.async_api import Response as AsyncResponse
     from playwright.sync_api import Browser, Page, Response
-
+    from playwright.async_api import Response as AsyncResponse
 
 class PlaywrightEvaluator(ABC):
     """Abstract base class for all evaluators.

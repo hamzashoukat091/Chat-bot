@@ -1,0 +1,562 @@
+-- Table: public.consignments
+
+-- DROP TABLE IF EXISTS public.consignments;
+
+CREATE TABLE IF NOT EXISTS public.consignments
+(
+    id integer NOT NULL DEFAULT nextval('consignments_id_seq'::regclass),
+    total_pkg integer,
+    total_weight numeric(10,2),
+    total_vol_weight numeric(10,2),
+    con_date timestamp(6) without time zone,
+    p_loc character varying(255) COLLATE pg_catalog."default",
+    d_loc character varying(255) COLLATE pg_catalog."default",
+    exp_delivery_date timestamp(6) without time zone,
+    con_id character varying(255) COLLATE pg_catalog."default",
+    amount numeric(10,2),
+    pickup_time_slot_start timestamp(6) without time zone,
+    pickup_time_slot_end timestamp(6) without time zone,
+    customer_ref_no character varying(255) COLLATE pg_catalog."default",
+    delivery_date timestamp(6) without time zone,
+    delivery_type character varying(255) COLLATE pg_catalog."default",
+    created_at timestamp(6) without time zone,
+    updated_at timestamp(6) without time zone,
+    created_by_id integer,
+    updated_by_id integer,
+    email_sent boolean,
+    physical_pod boolean,
+    receiver_name character varying(255) COLLATE pg_catalog."default",
+    track_journey character varying(255) COLLATE pg_catalog."default",
+    linehaul_reserved boolean,
+    gluon_cost numeric(10,2),
+    d_date_changed_by character varying(255) COLLATE pg_catalog."default",
+    onhold_remarks text COLLATE pg_catalog."default",
+    return_remarks text COLLATE pg_catalog."default",
+    pickup_city character varying(255) COLLATE pg_catalog."default",
+    pickup_hub character varying(255) COLLATE pg_catalog."default",
+    delivery_city character varying(255) COLLATE pg_catalog."default",
+    delivery_hub character varying(255) COLLATE pg_catalog."default",
+    edit_remarks text COLLATE pg_catalog."default",
+    edit_by character varying(255) COLLATE pg_catalog."default",
+    edit_at timestamp(6) without time zone,
+    api_order boolean,
+    description text COLLATE pg_catalog."default",
+    sla_start_date timestamp(6) without time zone,
+    terminated_hub_id character varying(255) COLLATE pg_catalog."default",
+    chargeable_weight double precision,
+    delivery_reserved boolean,
+    delivery_sort_center character varying(255) COLLATE pg_catalog."default",
+    priority integer,
+    CONSTRAINT consignments_pkey PRIMARY KEY (id),
+    CONSTRAINT consignments_created_by_id_fk FOREIGN KEY (created_by_id)
+        REFERENCES public.admin_users (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE SET NULL,
+    CONSTRAINT consignments_updated_by_id_fk FOREIGN KEY (updated_by_id)
+        REFERENCES public.admin_users (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE SET NULL
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.consignments
+    OWNER to postgres;
+-- Index: consignments_created_by_id_fk
+
+-- DROP INDEX IF EXISTS public.consignments_created_by_id_fk;
+
+CREATE INDEX IF NOT EXISTS consignments_created_by_id_fk
+    ON public.consignments USING btree
+    (created_by_id ASC NULLS LAST)
+    TABLESPACE pg_default;
+-- Index: consignments_updated_by_id_fk
+
+-- DROP INDEX IF EXISTS public.consignments_updated_by_id_fk;
+
+CREATE INDEX IF NOT EXISTS consignments_updated_by_id_fk
+    ON public.consignments USING btree
+    (updated_by_id ASC NULLS LAST)
+    TABLESPACE pg_default;
+	
+	-- Table: public.statuses
+
+-- DROP TABLE IF EXISTS public.statuses;
+
+CREATE TABLE IF NOT EXISTS public.statuses
+(
+    id integer NOT NULL DEFAULT nextval('statuses_id_seq'::regclass),
+    type character varying(255) COLLATE pg_catalog."default",
+    text character varying(255) COLLATE pg_catalog."default",
+    created_at timestamp(6) without time zone,
+    updated_at timestamp(6) without time zone,
+    created_by_id integer,
+    updated_by_id integer,
+    svg_image character varying(255) COLLATE pg_catalog."default",
+    CONSTRAINT statuses_pkey PRIMARY KEY (id),
+    CONSTRAINT statuses_created_by_id_fk FOREIGN KEY (created_by_id)
+        REFERENCES public.admin_users (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE SET NULL,
+    CONSTRAINT statuses_updated_by_id_fk FOREIGN KEY (updated_by_id)
+        REFERENCES public.admin_users (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE SET NULL
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.statuses
+    OWNER to postgres;
+-- Index: statuses_created_by_id_fk
+
+-- DROP INDEX IF EXISTS public.statuses_created_by_id_fk;
+
+CREATE INDEX IF NOT EXISTS statuses_created_by_id_fk
+    ON public.statuses USING btree
+    (created_by_id ASC NULLS LAST)
+    TABLESPACE pg_default;
+-- Index: statuses_updated_by_id_fk
+
+-- DROP INDEX IF EXISTS public.statuses_updated_by_id_fk;
+
+CREATE INDEX IF NOT EXISTS statuses_updated_by_id_fk
+    ON public.statuses USING btree
+    (updated_by_id ASC NULLS LAST)
+    TABLESPACE pg_default;
+	
+	-- Table: public.statuses_consignments_links
+
+-- DROP TABLE IF EXISTS public.statuses_consignments_links;
+
+CREATE TABLE IF NOT EXISTS public.statuses_consignments_links
+(
+    id integer NOT NULL DEFAULT nextval('statuses_consignments_links_id_seq'::regclass),
+    status_id integer,
+    consignment_id integer,
+    consignment_order double precision,
+    status_order double precision,
+    CONSTRAINT statuses_consignments_links_pkey PRIMARY KEY (id),
+    CONSTRAINT statuses_consignments_links_unique UNIQUE (status_id, consignment_id),
+    CONSTRAINT statuses_consignments_links_fk FOREIGN KEY (status_id)
+        REFERENCES public.statuses (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE,
+    CONSTRAINT statuses_consignments_links_inv_fk FOREIGN KEY (consignment_id)
+        REFERENCES public.consignments (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.statuses_consignments_links
+    OWNER to postgres;
+-- Index: statuses_consignments_links_fk
+
+-- DROP INDEX IF EXISTS public.statuses_consignments_links_fk;
+
+CREATE INDEX IF NOT EXISTS statuses_consignments_links_fk
+    ON public.statuses_consignments_links USING btree
+    (status_id ASC NULLS LAST)
+    TABLESPACE pg_default;
+-- Index: statuses_consignments_links_inv_fk
+
+-- DROP INDEX IF EXISTS public.statuses_consignments_links_inv_fk;
+
+CREATE INDEX IF NOT EXISTS statuses_consignments_links_inv_fk
+    ON public.statuses_consignments_links USING btree
+    (consignment_id ASC NULLS LAST)
+    TABLESPACE pg_default;
+-- Index: statuses_consignments_links_order_fk
+
+-- DROP INDEX IF EXISTS public.statuses_consignments_links_order_fk;
+
+CREATE INDEX IF NOT EXISTS statuses_consignments_links_order_fk
+    ON public.statuses_consignments_links USING btree
+    (consignment_order ASC NULLS LAST)
+    TABLESPACE pg_default;
+-- Index: statuses_consignments_links_order_inv_fk
+
+-- DROP INDEX IF EXISTS public.statuses_consignments_links_order_inv_fk;
+
+CREATE INDEX IF NOT EXISTS statuses_consignments_links_order_inv_fk
+    ON public.statuses_consignments_links USING btree
+    (status_order ASC NULLS LAST)
+    TABLESPACE pg_default;
+	
+	-- Table: public.consignments_d_loc_id_links
+
+-- DROP TABLE IF EXISTS public.consignments_d_loc_id_links;
+
+CREATE TABLE IF NOT EXISTS public.consignments_d_loc_id_links
+(
+    id integer NOT NULL DEFAULT nextval('consignments_d_loc_id_links_id_seq'::regclass),
+    consignment_id integer,
+    location_id integer,
+    consignment_order double precision,
+    CONSTRAINT consignments_d_loc_id_links_pkey PRIMARY KEY (id),
+    CONSTRAINT consignments_d_loc_id_links_unique UNIQUE (consignment_id, location_id),
+    CONSTRAINT consignments_d_loc_id_links_fk FOREIGN KEY (consignment_id)
+        REFERENCES public.consignments (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE,
+    CONSTRAINT consignments_d_loc_id_links_inv_fk FOREIGN KEY (location_id)
+        REFERENCES public.locations (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.consignments_d_loc_id_links
+    OWNER to postgres;
+-- Index: consignments_d_loc_id_links_fk
+
+-- DROP INDEX IF EXISTS public.consignments_d_loc_id_links_fk;
+
+CREATE INDEX IF NOT EXISTS consignments_d_loc_id_links_fk
+    ON public.consignments_d_loc_id_links USING btree
+    (consignment_id ASC NULLS LAST)
+    TABLESPACE pg_default;
+-- Index: consignments_d_loc_id_links_inv_fk
+
+-- DROP INDEX IF EXISTS public.consignments_d_loc_id_links_inv_fk;
+
+CREATE INDEX IF NOT EXISTS consignments_d_loc_id_links_inv_fk
+    ON public.consignments_d_loc_id_links USING btree
+    (location_id ASC NULLS LAST)
+    TABLESPACE pg_default;
+-- Index: consignments_d_loc_id_links_order_inv_fk
+
+-- DROP INDEX IF EXISTS public.consignments_d_loc_id_links_order_inv_fk;
+
+CREATE INDEX IF NOT EXISTS consignments_d_loc_id_links_order_inv_fk
+    ON public.consignments_d_loc_id_links USING btree
+    (consignment_order ASC NULLS LAST)
+    TABLESPACE pg_default;
+	
+	-- Table: public.consignments_p_loc_id_links
+
+-- DROP TABLE IF EXISTS public.consignments_p_loc_id_links;
+
+CREATE TABLE IF NOT EXISTS public.consignments_p_loc_id_links
+(
+    id integer NOT NULL DEFAULT nextval('consignments_p_loc_id_links_id_seq'::regclass),
+    consignment_id integer,
+    location_id integer,
+    consignment_order double precision,
+    CONSTRAINT consignments_p_loc_id_links_pkey PRIMARY KEY (id),
+    CONSTRAINT consignments_p_loc_id_links_unique UNIQUE (consignment_id, location_id),
+    CONSTRAINT consignments_p_loc_id_links_fk FOREIGN KEY (consignment_id)
+        REFERENCES public.consignments (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE,
+    CONSTRAINT consignments_p_loc_id_links_inv_fk FOREIGN KEY (location_id)
+        REFERENCES public.locations (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.consignments_p_loc_id_links
+    OWNER to postgres;
+-- Index: consignments_p_loc_id_links_fk
+
+-- DROP INDEX IF EXISTS public.consignments_p_loc_id_links_fk;
+
+CREATE INDEX IF NOT EXISTS consignments_p_loc_id_links_fk
+    ON public.consignments_p_loc_id_links USING btree
+    (consignment_id ASC NULLS LAST)
+    TABLESPACE pg_default;
+-- Index: consignments_p_loc_id_links_inv_fk
+
+-- DROP INDEX IF EXISTS public.consignments_p_loc_id_links_inv_fk;
+
+CREATE INDEX IF NOT EXISTS consignments_p_loc_id_links_inv_fk
+    ON public.consignments_p_loc_id_links USING btree
+    (location_id ASC NULLS LAST)
+    TABLESPACE pg_default;
+-- Index: consignments_p_loc_id_links_order_inv_fk
+
+-- DROP INDEX IF EXISTS public.consignments_p_loc_id_links_order_inv_fk;
+
+CREATE INDEX IF NOT EXISTS consignments_p_loc_id_links_order_inv_fk
+    ON public.consignments_p_loc_id_links USING btree
+    (consignment_order ASC NULLS LAST)
+    TABLESPACE pg_default;
+	
+	
+	-- Table: public.locations
+
+-- DROP TABLE IF EXISTS public.locations;
+
+CREATE TABLE IF NOT EXISTS public.locations
+(
+    id integer NOT NULL DEFAULT nextval('locations_id_seq'::regclass),
+    address character varying(255) COLLATE pg_catalog."default",
+    "desc" text COLLATE pg_catalog."default",
+    lat double precision,
+    "long" double precision,
+    verified boolean,
+    state character varying(255) COLLATE pg_catalog."default",
+    zone character varying(255) COLLATE pg_catalog."default",
+    loc_type character varying(255) COLLATE pg_catalog."default",
+    created_at timestamp(6) without time zone,
+    updated_at timestamp(6) without time zone,
+    created_by_id integer,
+    updated_by_id integer,
+    force_direct character varying(255) COLLATE pg_catalog."default",
+    skills character varying(255) COLLATE pg_catalog."default",
+    blacklist character varying(255) COLLATE pg_catalog."default",
+    update_by character varying(255) COLLATE pg_catalog."default",
+    active boolean,
+    poc_email text COLLATE pg_catalog."default",
+    poc_phone character varying(255) COLLATE pg_catalog."default",
+    cust_ref character varying(255) COLLATE pg_catalog."default",
+    priority character varying(255) COLLATE pg_catalog."default",
+    CONSTRAINT locations_pkey PRIMARY KEY (id),
+    CONSTRAINT locations_created_by_id_fk FOREIGN KEY (created_by_id)
+        REFERENCES public.admin_users (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE SET NULL,
+    CONSTRAINT locations_updated_by_id_fk FOREIGN KEY (updated_by_id)
+        REFERENCES public.admin_users (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE SET NULL
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.locations
+    OWNER to postgres;
+-- Index: locations_created_by_id_fk
+
+-- DROP INDEX IF EXISTS public.locations_created_by_id_fk;
+
+CREATE INDEX IF NOT EXISTS locations_created_by_id_fk
+    ON public.locations USING btree
+    (created_by_id ASC NULLS LAST)
+    TABLESPACE pg_default;
+-- Index: locations_updated_by_id_fk
+
+-- DROP INDEX IF EXISTS public.locations_updated_by_id_fk;
+
+CREATE INDEX IF NOT EXISTS locations_updated_by_id_fk
+    ON public.locations USING btree
+    (updated_by_id ASC NULLS LAST)
+    TABLESPACE pg_default;
+	
+	
+	-- Table: public.locations
+
+-- DROP TABLE IF EXISTS public.locations;
+
+CREATE TABLE IF NOT EXISTS public.locations
+(
+    id integer NOT NULL DEFAULT nextval('locations_id_seq'::regclass),
+    address character varying(255) COLLATE pg_catalog."default",
+    "desc" text COLLATE pg_catalog."default",
+    lat double precision,
+    "long" double precision,
+    verified boolean,
+    state character varying(255) COLLATE pg_catalog."default",
+    zone character varying(255) COLLATE pg_catalog."default",
+    loc_type character varying(255) COLLATE pg_catalog."default",
+    created_at timestamp(6) without time zone,
+    updated_at timestamp(6) without time zone,
+    created_by_id integer,
+    updated_by_id integer,
+    force_direct character varying(255) COLLATE pg_catalog."default",
+    skills character varying(255) COLLATE pg_catalog."default",
+    blacklist character varying(255) COLLATE pg_catalog."default",
+    update_by character varying(255) COLLATE pg_catalog."default",
+    active boolean,
+    poc_email text COLLATE pg_catalog."default",
+    poc_phone character varying(255) COLLATE pg_catalog."default",
+    cust_ref character varying(255) COLLATE pg_catalog."default",
+    priority character varying(255) COLLATE pg_catalog."default",
+    CONSTRAINT locations_pkey PRIMARY KEY (id),
+    CONSTRAINT locations_created_by_id_fk FOREIGN KEY (created_by_id)
+        REFERENCES public.admin_users (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE SET NULL,
+    CONSTRAINT locations_updated_by_id_fk FOREIGN KEY (updated_by_id)
+        REFERENCES public.admin_users (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE SET NULL
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.locations
+    OWNER to postgres;
+-- Index: locations_created_by_id_fk
+
+-- DROP INDEX IF EXISTS public.locations_created_by_id_fk;
+
+CREATE INDEX IF NOT EXISTS locations_created_by_id_fk
+    ON public.locations USING btree
+    (created_by_id ASC NULLS LAST)
+    TABLESPACE pg_default;
+-- Index: locations_updated_by_id_fk
+
+-- DROP INDEX IF EXISTS public.locations_updated_by_id_fk;
+
+CREATE INDEX IF NOT EXISTS locations_updated_by_id_fk
+    ON public.locations USING btree
+    (updated_by_id ASC NULLS LAST)
+    TABLESPACE pg_default;
+	
+	
+	-- Table: public.cities
+
+-- DROP TABLE IF EXISTS public.cities;
+
+CREATE TABLE IF NOT EXISTS public.cities
+(
+    id integer NOT NULL DEFAULT nextval('cities_id_seq'::regclass),
+    city character varying(255) COLLATE pg_catalog."default",
+    created_at timestamp(6) without time zone,
+    updated_at timestamp(6) without time zone,
+    created_by_id integer,
+    updated_by_id integer,
+    active boolean,
+    update_by character varying(255) COLLATE pg_catalog."default",
+    hub_rate numeric(10,2),
+    hub_2_rate numeric(10,2),
+    CONSTRAINT cities_pkey PRIMARY KEY (id),
+    CONSTRAINT cities_created_by_id_fk FOREIGN KEY (created_by_id)
+        REFERENCES public.admin_users (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE SET NULL,
+    CONSTRAINT cities_updated_by_id_fk FOREIGN KEY (updated_by_id)
+        REFERENCES public.admin_users (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE SET NULL
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.cities
+    OWNER to postgres;
+-- Index: cities_created_by_id_fk
+
+-- DROP INDEX IF EXISTS public.cities_created_by_id_fk;
+
+CREATE INDEX IF NOT EXISTS cities_created_by_id_fk
+    ON public.cities USING btree
+    (created_by_id ASC NULLS LAST)
+    TABLESPACE pg_default;
+-- Index: cities_updated_by_id_fk
+
+-- DROP INDEX IF EXISTS public.cities_updated_by_id_fk;
+
+CREATE INDEX IF NOT EXISTS cities_updated_by_id_fk
+    ON public.cities USING btree
+    (updated_by_id ASC NULLS LAST)
+    TABLESPACE pg_default;
+	
+	-- Table: public.cities_hub_2_links
+
+-- DROP TABLE IF EXISTS public.cities_hub_2_links;
+
+CREATE TABLE IF NOT EXISTS public.cities_hub_2_links
+(
+    id integer NOT NULL DEFAULT nextval('cities_hub_2_links_id_seq'::regclass),
+    city_id integer,
+    hub_id integer,
+    city_order double precision,
+    CONSTRAINT cities_hub_2_links_pkey PRIMARY KEY (id),
+    CONSTRAINT cities_hub_2_links_unique UNIQUE (city_id, hub_id),
+    CONSTRAINT cities_hub_2_links_fk FOREIGN KEY (city_id)
+        REFERENCES public.cities (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE,
+    CONSTRAINT cities_hub_2_links_inv_fk FOREIGN KEY (hub_id)
+        REFERENCES public.hubs (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.cities_hub_2_links
+    OWNER to postgres;
+-- Index: cities_hub_2_links_fk
+
+-- DROP INDEX IF EXISTS public.cities_hub_2_links_fk;
+
+CREATE INDEX IF NOT EXISTS cities_hub_2_links_fk
+    ON public.cities_hub_2_links USING btree
+    (city_id ASC NULLS LAST)
+    TABLESPACE pg_default;
+-- Index: cities_hub_2_links_inv_fk
+
+-- DROP INDEX IF EXISTS public.cities_hub_2_links_inv_fk;
+
+CREATE INDEX IF NOT EXISTS cities_hub_2_links_inv_fk
+    ON public.cities_hub_2_links USING btree
+    (hub_id ASC NULLS LAST)
+    TABLESPACE pg_default;
+-- Index: cities_hub_2_links_order_inv_fk
+
+-- DROP INDEX IF EXISTS public.cities_hub_2_links_order_inv_fk;
+
+CREATE INDEX IF NOT EXISTS cities_hub_2_links_order_inv_fk
+    ON public.cities_hub_2_links USING btree
+    (city_order ASC NULLS LAST)
+    TABLESPACE pg_default;
+	
+	-- Table: public.cities_hub_links
+
+-- DROP TABLE IF EXISTS public.cities_hub_links;
+
+CREATE TABLE IF NOT EXISTS public.cities_hub_links
+(
+    id integer NOT NULL DEFAULT nextval('cities_hub_links_id_seq'::regclass),
+    city_id integer,
+    hub_id integer,
+    city_order double precision,
+    CONSTRAINT cities_hub_links_pkey PRIMARY KEY (id),
+    CONSTRAINT cities_hub_links_unique UNIQUE (city_id, hub_id),
+    CONSTRAINT cities_hub_links_fk FOREIGN KEY (city_id)
+        REFERENCES public.cities (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE,
+    CONSTRAINT cities_hub_links_inv_fk FOREIGN KEY (hub_id)
+        REFERENCES public.hubs (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.cities_hub_links
+    OWNER to postgres;
+-- Index: cities_hub_links_fk
+
+-- DROP INDEX IF EXISTS public.cities_hub_links_fk;
+
+CREATE INDEX IF NOT EXISTS cities_hub_links_fk
+    ON public.cities_hub_links USING btree
+    (city_id ASC NULLS LAST)
+    TABLESPACE pg_default;
+-- Index: cities_hub_links_inv_fk
+
+-- DROP INDEX IF EXISTS public.cities_hub_links_inv_fk;
+
+CREATE INDEX IF NOT EXISTS cities_hub_links_inv_fk
+    ON public.cities_hub_links USING btree
+    (hub_id ASC NULLS LAST)
+    TABLESPACE pg_default;
+-- Index: cities_hub_links_order_inv_fk
+
+-- DROP INDEX IF EXISTS public.cities_hub_links_order_inv_fk;
+
+CREATE INDEX IF NOT EXISTS cities_hub_links_order_inv_fk
+    ON public.cities_hub_links USING btree
+    (city_order ASC NULLS LAST)
+    TABLESPACE pg_default;
+	

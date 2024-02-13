@@ -2,7 +2,7 @@ import os
 import tempfile
 
 import boto3
-from embedding.loaders.base import BaseLoader, Document
+from app.embedding.loaders.base import BaseLoader, Document
 from unstructured.partition.auto import partition
 
 
@@ -20,7 +20,7 @@ class S3FileLoader(BaseLoader):
         """Get elements."""
         s3 = boto3.client("s3")
         with tempfile.TemporaryDirectory() as temp_dir:
-            file_path = f"{temp_dir}/{self.key}"
+            file_path = f"{self.key}"
             os.makedirs(os.path.dirname(file_path), exist_ok=True)
             s3.download_file(self.bucket, self.key, file_path)
             return partition(filename=file_path)

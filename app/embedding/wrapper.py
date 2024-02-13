@@ -1,7 +1,7 @@
 import logging
 
 from app.bedrock import calculate_document_embeddings
-from embedding.loaders.base import BaseLoader, Document
+from app.embedding.loaders.base import BaseLoader, Document
 from llama_index.node_parser import TextSplitter
 
 logger = logging.getLogger(__name__)

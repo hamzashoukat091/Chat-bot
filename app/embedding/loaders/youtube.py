@@ -1,7 +1,7 @@
 from typing import Any, List, Optional, Sequence, Union
 from urllib.parse import parse_qs, urlparse
 
-from embedding.loaders.base import BaseLoader, Document
+from app.embedding.loaders.base import BaseLoader, Document
 from youtube_transcript_api import (
     NoTranscriptFound,
     TranscriptsDisabled,

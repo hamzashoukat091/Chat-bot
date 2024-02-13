@@ -81,14 +81,14 @@ def compose_upload_temp_s3_path(user_id: str, bot_id: str, filename: str) -> str
     This path is used for uploading files to S3.
     """
     prefix = compose_upload_temp_s3_prefix
-    return f"{prefix(user_id, bot_id)}{filename}"
+    return f"{filename}"
 
 
 def compose_upload_document_s3_path(user_id: str, bot_id: str, filename: str) -> str:
     """Compose S3 path for documents.
     The files on this path is used for embedding.
     """
-    return f"{user_id}/{bot_id}/documents/{filename}"
+    return f"documents/{filename}"
 
 
 def delete_file_from_s3(bucket: str, key: str):
