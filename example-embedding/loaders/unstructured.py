@@ -1,9 +1,8 @@
 """Loader that uses unstructured to load HTML files."""
 import logging
-import time
 from typing import Any, List
 
-from app.embedding.loaders.base import BaseLoader, Document
+from embedding.loaders.base import BaseLoader, Document
 from unstructured.partition.auto import partition
 
 logger = logging.getLogger(__name__)

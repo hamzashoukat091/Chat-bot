@@ -10,12 +10,11 @@ from app.repositories.common import _get_table_client
 from app.repositories.custom_bot import compose_bot_id, decompose_bot_id
 from app.route_schema import type_sync_status
 from app.utils import compose_upload_document_s3_path
-from app.embedding.loaders.url import UrlLoader
-from app.embedding.loaders.base import BaseLoader
-from app.embedding.loaders.s3 import S3FileLoader
-from app.embedding.wrapper import DocumentSplitter, Embedder
+from embedding.loaders.url import UrlLoader
+from embedding.loaders.base import BaseLoader
+from embedding.loaders.s3 import S3FileLoader
+from embedding.wrapper import DocumentSplitter, Embedder
 from llama_index.node_parser import SentenceSplitter
-from ulid import ULID
 
 logging.basicConfig(level=logging.INFO)
 

@@ -1,7 +1,7 @@
 import logging
 
 from app.bedrock import calculate_document_embeddings
-from app.embedding.loaders.base import BaseLoader, Document
+from embedding.loaders.base import Document
 from llama_index.node_parser import TextSplitter
 
 logger = logging.getLogger(__name__)
@@ -40,5 +40,5 @@ class Embedder:
             self.print_documents_summary(documents)
         embeddings = calculate_document_embeddings([d.page_content for d in documents])
         if self.verbose:
-            logger.info("Done embedding.")
+            logger.info("Done example-embedding.")
         return embeddings

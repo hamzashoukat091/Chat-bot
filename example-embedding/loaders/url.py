@@ -3,13 +3,13 @@ import urllib.error
 import urllib.request
 from typing import Literal
 
-from app.embedding.loaders.base import BaseLoader, Document
-from app.embedding.loaders.playwright import (
+from embedding.loaders.base import BaseLoader, Document
+from embedding.loaders.playwright import (
     DelayUnstructuredHtmlEvaluator,
     PlaywrightURLLoader,
 )
-from app.embedding.loaders.unstructured import UnstructuredURLLoader
-from app.embedding.loaders.youtube import YoutubeLoaderWithLangDetection, _parse_video_id
+from embedding.loaders.unstructured import UnstructuredURLLoader
+from embedding.loaders.youtube import YoutubeLoaderWithLangDetection, _parse_video_id
 
 logger = logging.getLogger(__name__)
 

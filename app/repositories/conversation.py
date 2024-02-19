@@ -16,12 +16,7 @@ from app.repositories.common import (
     compose_conv_id,
     decompose_conv_id,
 )
-from app.repositories.model import (
-    ContentModel,
-    ConversationMeta,
-    ConversationModel,
-    MessageModel,
-)
+
 from app.utils import get_current_time
 from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
@@ -30,7 +25,7 @@ logger = logging.getLogger(__name__)
 sts_client = boto3.client("sts")
 
 
-def store_conversation(user_id: str, conversation: ConversationModel):
+def store_conversation(user_id: str, conversation):
     logger.info(f"Storing conversation: {conversation.model_dump_json()}")
     table = _get_table_client(user_id)
 
@@ -52,63 +47,7 @@ def store_conversation(user_id: str, conversation: ConversationModel):
     )
     return response
 
-
-def find_conversation_by_user_id(user_id: str) -> list[ConversationMeta]:
-    logger.info(f"Finding conversations for user: {user_id}")
-    table = _get_table_client(user_id)
-
-    query_params = {
-        "KeyConditionExpression": Key("PK").eq(user_id)
-        # NOTE: Need SK to fetch only conversations
-        & Key("SK").begins_with(f"{user_id}#CONV#"),
-        "ScanIndexForward": False,
-    }
-
-    response = table.query(**query_params)
-    conversations = [
-        ConversationMeta(
-            id=decompose_conv_id(item["SK"]),
-            create_time=float(item["CreateTime"]),
-            title=item["Title"],
-            # NOTE: all message has the same model
-            model=json.loads(item["MessageMap"]).popitem()[1]["model"],
-            bot_id=item["BotId"] if "BotId" in item else None,
-        )
-        for item in response["Items"]
-    ]
-
-    query_count = 1
-    MAX_QUERY_COUNT = 5
-    while "LastEvaluatedKey" in response:
-        model = json.loads(response["Items"][0]["MessageMap"]).popitem()[1]["model"]
-        query_params["ExclusiveStartKey"] = response["LastEvaluatedKey"]
-        # NOTE: max page size is 1MB
-        # See: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.Pagination.html
-        response = table.query(
-            **query_params,
-        )
-        conversations.extend(
-            [
-                ConversationMeta(
-                    id=decompose_conv_id(item["SK"]),
-                    create_time=float(item["CreateTime"]),
-                    title=item["Title"],
-                    model=model,
-                    bot_id=item["BotId"] if "BotId" in item else None,
-                )
-                for item in response["Items"]
-            ]
-        )
-        query_count += 1
-        if query_count > MAX_QUERY_COUNT:
-            logger.warning(f"Query count exceeded {MAX_QUERY_COUNT}")
-            break
-
-    logger.info(f"Found conversations: {conversations}")
-    return conversations
-
-
-def find_conversation_by_id(user_id: str, conversation_id: str) -> ConversationModel:
+def find_conversation_by_id(user_id: str, conversation_id: str):
     logger.info(f"Finding conversation: {conversation_id}")
     table = _get_table_client(user_id)
     response = table.query(
@@ -120,29 +59,8 @@ def find_conversation_by_id(user_id: str, conversation_id: str) -> ConversationM
 
     # NOTE: conversation is unique
     item = response["Items"][0]
-    conv = ConversationModel(
-        id=decompose_conv_id(item["SK"]),
-        create_time=float(item["CreateTime"]),
-        title=item["Title"],
-        message_map={
-            k: MessageModel(
-                role=v["role"],
-                content=ContentModel(
-                    content_type=v["content"]["content_type"],
-                    body=v["content"]["body"],
-                ),
-                model=v["model"],
-                children=v["children"],
-                parent=v["parent"],
-                create_time=float(v["create_time"]),
-            )
-            for k, v in json.loads(item["MessageMap"]).items()
-        },
-        last_message_id=item["LastMessageId"],
-        bot_id=item["BotId"] if "BotId" in item else None,
-    )
-    logger.info(f"Found conversation: {conv}")
-    return conv
+
+    return item
 
 
 def delete_conversation_by_id(user_id: str, conversation_id: str):

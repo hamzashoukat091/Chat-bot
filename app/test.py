@@ -1,16 +1,11 @@
 import os
-import boto3
 from langchain_community.embeddings import BedrockEmbeddings
 from langchain_community.llms.bedrock import Bedrock
-from langchain.text_splitter import CharacterTextSplitter, RecursiveCharacterTextSplitter
-from langchain_community.document_loaders import TextLoader
-from langchain_community.document_loaders import S3FileLoader
-from langchain.indexes.vectorstore import VectorStoreIndexWrapper
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.document_loaders.s3_directory import S3DirectoryLoader
 from langchain_community.vectorstores.pgvector import PGVector
 
 from utils import get_bedrock_client
-from app.embedding.loaders.base import BaseLoader
-from app.utils import compose_upload_document_s3_path
 
 # Set environment variables
 DOCUMENT_BUCKET = os.environ.get("DOCUMENT_BUCKET", "bedrock-documents-v1")
@@ -28,17 +23,19 @@ llm = Bedrock(
 embeddings = BedrockEmbeddings(
     credentials_profile_name="default",
     region_name="us-east-1",
-    model_id="cohere.embed-english-v3",
+    model_id="cohere.embed-multilingual-v3",
     client=get_bedrock_client(),
 )
 
 
-def test(bot_id, filename):
+def test(bot_id, directory):
     # Load text data and split documents
-    loader = S3FileLoader(bucket=DOCUMENT_BUCKET, key=f"documents/{filename}")
+    loader = S3DirectoryLoader(bucket=DOCUMENT_BUCKET, prefix=directory, use_ssl=True)
     documents = loader.load()
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
     docs = text_splitter.split_documents(documents)
+
+    print(docs)
 
     # Create PGVector instance
     connection_string = PGVector.connection_string_from_db_params(
@@ -53,7 +50,9 @@ def test(bot_id, filename):
     PGVector.from_documents(
         documents=docs,
         embedding=embeddings,
-        collection_name=bot_id,
+        collection_name=str(bot_id),
         connection_string=connection_string,
         pre_delete_collection=True,
     )
+
+    return 'ok'

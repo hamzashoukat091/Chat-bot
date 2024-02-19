@@ -9,7 +9,7 @@ GENERATION_CONFIG = {
     "stop_sequences": ["Human: ", "Assistant: "],
 }
 
-# Configure embedding parameter.
+# Configure example-embedding parameter.
 EMBEDDING_CONFIG = {
     # DO NOT change `model_id` (currently other models are not supported)
     "model_id": "cohere.embed-multilingual-v3",

@@ -12,6 +12,10 @@ from langchain_community.llms.bedrock import Bedrock
 from app.utils import get_bedrock_client
 from langchain.indexes.vectorstore import VectorStoreIndexWrapper
 from langchain.chains import RetrievalQA
+from langchain_core.runnables import RunnablePassthrough, RunnableParallel
+from langchain_core.output_parsers import StrOutputParser
+from langchain.chains import create_sql_query_chain
+from langchain import hub
 
 from bedrock import _create_body, get_model_id, invoke
 from app.config import SEARCH_CONFIG
@@ -21,18 +25,10 @@ from app.repositories.conversation import (
     RecordNotFoundError
 )
 # from app.repositories.custom_bot import find_alias_by_id, store_alias
-from repositories.model import (
-    BotAliasModel,
-    BotModel,
-    ContentModel,
-    ConversationModel,
-    MessageModel,
-)
-from route_schema import ChatInput, ChatOutput, Content, Conversation, MessageOutput
-from app.usecases.bot import fetch_bot, modify_bot_last_used_time
-from utils import get_buffer_string, get_current_time, is_running_on_lambda
-from app.vector_search import SearchResult, search_related_docs
-from ulid import ULID
+from app.usecases.bot import fetch_bot
+from utils import get_current_time, is_running_on_lambda
+# from app.vector_search import SearchResult, search_related_docs
+# from ulid import ULID
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -47,120 +43,16 @@ connection_string = PGVector.connection_string_from_db_params(
         password=os.environ.get("PGVECTOR_PASSWORD", "postgres123"))
 
 
-def prepare_conversation(user_id: str, chat_input: ChatInput) -> tuple[str, ConversationModel, BotModel | None]:
+def prepare_conversation(user_id: str, chat_input):
     current_time = get_current_time()
-    bot = None
 
-    try:
-        # Fetch existing conversation
-        conversation = find_conversation_by_id(user_id, chat_input.conversation_id)
-        logger.info(f"Found conversation: {conversation}")
-        parent_id = chat_input.message.parent_message_id
-        if chat_input.message.parent_message_id == "system" and chat_input.bot_id:
-            # The case editing first user message and use bot
-            parent_id = "instruction"
-        if chat_input.bot_id:
-            logger.info("Bot id is provided. Fetching bot.")
-            owned, bot = fetch_bot(user_id, chat_input.bot_id)
-    except RecordNotFoundError:
-        # The case for new conversation. Note that editing first user message is not considered as new conversation.
-        logger.info(
-            f"No conversation found with id: {chat_input.conversation_id}. Creating new conversation."
-        )
+    logger.info("Bot id is provided. Fetching bot.")
+    owned, bot = fetch_bot(user_id, chat_input.bot_id)
 
-        initial_message_map = {
-                # Dummy system message
-                "system": MessageModel(
-                    role="system",
-                    content=ContentModel(
-                        content_type="text",
-                        body="hey",
-                    ),
-                    model=chat_input.message.model,
-                    # model="claude-v2:1",
-                    children=[],
-                    parent=None,
-                    create_time=current_time,
-                )
-            }
-        parent_id = "system"
-        if chat_input.bot_id:
-            logger.info("Bot id is provided. Fetching bot.")
-            parent_id = "instruction"
-            # Fetch bot and append instruction
-            owned, bot = fetch_bot(user_id, chat_input.bot_id)
-            initial_message_map["instruction"] = MessageModel(
-                role="instruction",
-                content=ContentModel(
-                    content_type="text",
-                    body=bot.instruction,
-                ),
-                model=chat_input.message.model,
-                children=[],
-                parent="system",
-                create_time=current_time,
-            )
-            initial_message_map["system"].children.append("instruction")
-
-            if not owned:
-                try:
-                    # Check alias is already created
-                    find_alias_by_id(user_id, chat_input.bot_id)
-                except RecordNotFoundError:
-                    logger.info(
-                        "Bot is not owned by the user. Creating alias to shared bot."
-                    )
-                    # Create alias item
-                    store_alias(
-                        user_id,
-                        BotAliasModel(
-                            id=bot.id,
-                            title=bot.title,
-                            description=bot.description,
-                            original_bot_id=chat_input.bot_id,
-                            create_time=current_time,
-                            last_used_time=current_time,
-                            is_pinned=False,
-                            sync_status=bot.sync_status,
-                            has_knowledge=bot.knowledge
-                            and (
-                                len(bot.knowledge.source_urls) > 0
-                                or len(bot.knowledge.sitemap_urls) > 0
-                                or len(bot.knowledge.filenames) > 0
-                            ),
-                        ),
-                    )
-
-        # Create new conversation
-        conversation = ConversationModel(
-                id=chat_input.conversation_id,
-                title="New conversation",
-                create_time=current_time,
-                message_map=initial_message_map,
-                last_message_id="",
-                bot_id=chat_input.bot_id,
-            )
-
-    # Append user chat input to the conversation
-    message_id = str(ULID())
-    new_message = MessageModel(
-        role=chat_input.message.role,
-        content=ContentModel(
-            content_type=chat_input.message.content.content_type,
-            body=chat_input.message.content.body,
-        ),
-        model=chat_input.message.model,
-        children=[],
-        parent=parent_id,
-        create_time=current_time,
-    )
-    conversation.message_map[message_id] = new_message
-    conversation.message_map[parent_id].children.append(message_id)  # type: ignore
-
-    return (message_id, conversation, bot)
+    return bot
 
 
-def get_invoke_payload(message_map: dict[str, MessageModel], chat_input: ChatInput):
+def get_invoke_payload(message_map, chat_input):
     messages = trace_to_root(
         node_id=chat_input.message.parent_message_id,
         message_map=message_map,
@@ -179,7 +71,7 @@ def get_invoke_payload(message_map: dict[str, MessageModel], chat_input: ChatInp
     }
 
 
-def trace_to_root(node_id: str | None, message_map: dict[str, MessageModel]) -> list[MessageModel]:
+def trace_to_root(node_id: str | None, message_map):
     """Trace message map from leaf node to root node."""
     result = []
     if not node_id or node_id == "system":
@@ -225,7 +117,7 @@ def trace_to_root(node_id: str | None, message_map: dict[str, MessageModel]) -> 
 #     return reply_txt
 
 
-def insert_knowledge(wrapper, conversation: ConversationModel, search_results) -> ConversationModel:
+def insert_knowledge(wrapper, conversation, search_results):
     """Insert knowledge to the conversation."""
 
     llm = Bedrock(
@@ -296,13 +188,10 @@ def insert_knowledge(wrapper, conversation: ConversationModel, search_results) -
 #     return conversation_with_context
 
 
-def chat(user_id: str, chat_input: ChatInput) -> ChatOutput:
-    user_msg_id, conversation, bot = prepare_conversation(user_id, chat_input)
+def chat(user_id: str, chat_input):
+    bot = prepare_conversation(user_id, chat_input)
 
-    message_map = conversation.message_map
     if bot:
-        # NOTE: `is_running_on_lambda`is a workaround for local testing due to no postgres mock.
-        # Fetch most related documents from vector store
 
         llm = Bedrock(
             credentials_profile_name="default",
@@ -333,16 +222,25 @@ def chat(user_id: str, chat_input: ChatInput) -> ChatOutput:
         )
 
         query = conversation.message_map[user_msg_id].content.body
-        inserted_prompt = """{}
-            Remember, *RESPOND BASED ON THE GIVEN CONTEXTS. YOU MUST NEVER GUESS*. If you cannot find source from the contexts, just say "I don't know".
-            In addition, *YOU MUST OBEY THE FOLLOWING RULE*:
-            <rule>
-            Write only SQL query for PostgreSQL
-            </rule>
-            """.format(
-            query
+
+        # Retrieve and generate using the relevant snippets of the blog.
+        prompt = hub.pull("rlm/rag-prompt")
+
+        def format_docs(docs):
+            return "\n\n".join(docc.page_content for docc in docs)
+
+        rag_chain_from_docs = (
+                RunnablePassthrough.assign(context=(lambda x: format_docs(x["context"])))
+                | prompt
+                | llm
+                | StrOutputParser()
         )
-        return qa.run(inserted_prompt)
+
+        rag_chain_with_source = RunnableParallel(
+            {"context": retriever, "question": RunnablePassthrough()}
+        ).assign(answer=rag_chain_from_docs)
+
+        return rag_chain_with_source.invoke(query)
         # results = search_related_docs(
         #     bot_id=bot.id, limit=SEARCH_CONFIG["max_results"], query=query
         # )
@@ -369,58 +267,4 @@ def chat(user_id: str, chat_input: ChatInput) -> ChatOutput:
         # message_map = conversation_with_context.message_map
 
         # return conversation_with_context
-
-    messages = trace_to_root(
-        node_id=chat_input.message.parent_message_id, message_map=message_map
-    )
-    messages.append(chat_input.message)  # type: ignore
-
-    # Invoke Bedrock
-    prompt = get_buffer_string(messages)
-
-    reply_txt = invoke(prompt=prompt, model=chat_input.message.model)
-    
-    # return reply_txt
-
-    # # Issue id for new assistant message
-    assistant_msg_id = str(ULID())
-    # # Append bedrock output to the existing conversation
-    message = MessageModel(
-        role="assistant",
-        content=ContentModel(content_type="text", body=reply_txt),
-        model=chat_input.message.model,
-        children=[],
-        parent=user_msg_id,
-        create_time=get_current_time(),
-    )
-    conversation.message_map[assistant_msg_id] = message
-
-    # Append children to parent
-    conversation.message_map[user_msg_id].children.append(assistant_msg_id)
-    conversation.last_message_id = assistant_msg_id
-
-    # Store updated conversation
-    store_conversation(user_id, conversation)
-    # # Update bot last used time
-    if chat_input.bot_id:
-        logger.info("Bot id is provided. Updating bot last used time.")
-        # Update bot last used time
-        modify_bot_last_used_time(user_id, chat_input.bot_id)
-
-    output = ChatOutput(
-        conversation_id=conversation.id,
-        create_time=conversation.create_time,
-        message=MessageOutput(
-            role=message.role,
-            content=Content(
-                content_type=message.content.content_type,
-                body=message.content.body,
-            ),
-            model=message.model,
-            children=message.children,
-            parent=message.parent,
-        ),
-        bot_id=conversation.bot_id,
-    )
-
     return output

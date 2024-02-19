@@ -2,7 +2,7 @@ import os
 import tempfile
 
 import boto3
-from app.embedding.loaders.base import BaseLoader, Document
+from embedding.loaders.base import BaseLoader, Document
 from unstructured.partition.auto import partition
 
 
