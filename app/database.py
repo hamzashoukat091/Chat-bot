@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-SQLALCHEMY_DATABASE_URL = 'postgresql://postgres:postgres123@localhost/chatbot'
+SQLALCHEMY_DATABASE_URL = 'postgresql://postgres:postgres123@llm-chatbot.callkltzuxly.ap-southeast-1.rds.amazonaws.com/chatbot'
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 

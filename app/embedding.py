@@ -5,6 +5,8 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders.s3_directory import S3DirectoryLoader
 from langchain_community.vectorstores.pgvector import PGVector
 
+from langchain.embeddings import HuggingFaceEmbeddings
+
 from utils import get_bedrock_client
 
 # Set environment variables
@@ -28,14 +30,40 @@ embeddings = BedrockEmbeddings(
 )
 
 
-def test(bot_id, directory):
+def cohere(bot_id, directory):
     # Load text data and split documents
     loader = S3DirectoryLoader(bucket=DOCUMENT_BUCKET, prefix=directory, use_ssl=True)
     documents = loader.load()
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
     docs = text_splitter.split_documents(documents)
 
-    print(docs)
+    # Create PGVector instance
+    connection_string = PGVector.connection_string_from_db_params(
+        driver=os.environ.get("PGVECTOR_DRIVER", "psycopg2"),
+        host=os.environ.get("PGVECTOR_HOST", "llm-chatbot.callkltzuxly.ap-southeast-1.rds.amazonaws.com"),
+        port=int(os.environ.get("PGVECTOR_PORT", "5432")),
+        database=os.environ.get("PGVECTOR_DATABASE", "chatbot"),
+        user=os.environ.get("PGVECTOR_USER", "postgres"),
+        password=os.environ.get("PGVECTOR_PASSWORD", "postgres123"),
+    )
+
+    PGVector.from_documents(
+        documents=docs,
+        embedding=embeddings,
+        collection_name=str(bot_id),
+        connection_string=connection_string,
+        pre_delete_collection=True,
+    )
+
+    return 'ok'
+
+
+def hugging(bot_id, directory):
+    embeddings = HuggingFaceEmbeddings()
+    loader = S3DirectoryLoader(bucket=DOCUMENT_BUCKET, prefix=directory, use_ssl=True)
+    documents = loader.load()
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
+    docs = text_splitter.split_documents(documents)
 
     # Create PGVector instance
     connection_string = PGVector.connection_string_from_db_params(

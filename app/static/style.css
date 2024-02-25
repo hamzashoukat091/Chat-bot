@@ -1,0 +1,150 @@
+body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background-color: #1E1E1E; /* Dark background color */
+    color: #EDEDED; /* Light text color */
+    margin: 0;
+    padding: 0 20px;
+}
+
+#bot{
+}
+
+#outer {
+}
+
+#userInput {
+    position: fixed;
+    bottom: 0;
+    left: 20px;
+    width: calc(100% - 40px);
+    background-color: #1E1E1E; /* Darker background color */
+    padding: 10px; /* Add padding for spacing */
+    box-sizing: border-box; /* Include padding in width calculation */
+    z-index: 1; /* Ensure it's above the chatbox */
+}
+
+#header{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+#header img {
+    height: 80px
+}
+
+#chatbox {
+    overflow-y: auto; /* Enable vertical scrolling if content exceeds height */
+    height: calc(100vh - 80px); /* Maximum height for chatbox */
+    padding-bottom: 60px; /* Add padding at the bottom for input container */
+    box-sizing: border-box; /* Include padding in height calculation */
+    background-color: #273443; /* Lighter background color for the chatbox */
+}
+
+#textInput {
+    width: 87%;
+    border: none;
+    border-bottom: 3px solid #075E54; /* WhatsApp green */
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 17px;
+    background-color: transparent; /* Transparent text input background */
+    color: #EDEDED; /* Light text color */
+}
+
+#buttonInput {
+    padding: 4px 12px;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 15px;
+    background-color: #075E54; /* WhatsApp green */
+    color: #EDEDED; /* Light text color */
+    border: none;
+    cursor: pointer;
+}
+
+.userText {
+    color: #EDEDED; /* Light text color */
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 17px;
+    text-align: left; /* Change text alignment to left */
+    padding: 8px; /* Add padding */
+    border-radius: 10px; /* Add border-radius for rounded corners */
+    max-width: 50%; /* Limit the maximum width */
+    height: auto;
+    word-wrap: break-word;
+    background-color: #34B7F1; /* WhatsApp blue */
+    margin-bottom: 10px; /* Add margin between messages */
+    margin-right: 10px;
+    clear: both; /* Ensure messages wrap properly */
+    float: right; /* Align user messages to the left */
+}
+
+.userText span {
+    background-color: #34B7F1; /* WhatsApp blue */
+    padding: 2px;
+    border-radius: 2px;
+    margin-left: 10px; /* Increase margin for better separation */
+}
+
+
+.botText {
+    color: #EDEDED; /* Light text color */
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 17px;
+    text-align: left;
+    padding: 8px; /* Add padding */
+    border-radius: 10px; /* Add border-radius for rounded corners */
+    background-color: #075E54; /* WhatsApp green */
+    margin-bottom: 10px; /* Add margin between messages */
+    clear: both; /* Ensure messages wrap properly */
+    max-width: 50%; /* Limit the maximum width */
+    margin-left: 10px;
+    height: auto;
+    word-wrap: break-word;
+    float: left; /* Align bot messages to the right */
+}
+
+.botText span {
+    background-color: #075E54; /* WhatsApp green */
+    padding: 2px;
+    border-radius: 2px;
+    margin-right: 10px; /* Increase margin for better separation */
+}
+
+#tidbit {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 300px;
+}
+
+.actionButton {
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        cursor: pointer;
+        font-size: 14px;
+        border-radius: 5px;
+    }
+
+    #clearChatBtn {
+        background-color: #ff5252; /* Red color for clear chat button */
+    }
+
+    #buttonInput {
+        background-color: #009688; /* Green color for send button */
+        margin-right: 10px; /* Add margin between buttons */
+    }
+
+    .actionButton:hover {
+        filter: brightness(85%); /* Reduce brightness on hover */
+    }
+
+    #userInput {
+        display: flex;
+        align-items: center;
+    }
+
+    #textInput {
+        flex: 1;
+        margin-right: 10px; /* Add margin between input and buttons */
+    }

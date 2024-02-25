@@ -4,6 +4,7 @@ import logging
 from fastapi import FastAPI
 from route import router
 from database import engine
+from fastapi.staticfiles import StaticFiles
 
 import model
 
@@ -11,6 +12,8 @@ import model
 model.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 logger = logging.getLogger(__name__)
 

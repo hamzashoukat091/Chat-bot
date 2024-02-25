@@ -83,19 +83,3 @@ def update_bot(
             raise e
 
     return response
-
-
-def find_public_bot_by_id(bot_id: str):
-    """Find public bot by id."""
-    table = _get_table_public_client()  # Use public client
-    logger.info(f"Finding public bot with id: {bot_id}")
-    response = table.query(
-        IndexName="PublicBotIdIndex",
-        KeyConditionExpression=Key("PublicBotId").eq(bot_id),
-    )
-    if len(response["Items"]) == 0:
-        raise RecordNotFoundError(f"Public bot with id {bot_id} not found")
-
-    item = response["Items"][0]
-    return item
-
