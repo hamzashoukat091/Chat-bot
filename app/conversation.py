@@ -1,23 +1,15 @@
 import json
 import logging
-import os
-from datetime import datetime
 from decimal import Decimal as decimal
-from functools import wraps
 
 import boto3
-from app.repositories.common import (
-    TABLE_NAME,
+from common import (
     TRANSACTION_BATCH_SIZE,
     RecordNotFoundError,
-    _get_dynamodb_client,
     _get_table_client,
-    compose_bot_id,
     compose_conv_id,
-    decompose_conv_id,
 )
 
-from app.utils import get_current_time
 from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
 

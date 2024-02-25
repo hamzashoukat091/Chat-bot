@@ -1,22 +1,12 @@
-import json
 import logging
-import os
-from datetime import datetime
 from decimal import Decimal as decimal
 
 import boto3
-from app.repositories.common import (
-    RecordAccessNotAllowedError,
+from common import (
     RecordNotFoundError,
     _get_table_client,
-    _get_table_public_client,
-    compose_bot_alias_id,
     compose_bot_id,
-    decompose_bot_alias_id,
-    decompose_bot_id,
 )
-from app.utils import get_current_time
-from boto3.dynamodb.conditions import Attr, Key
 from botocore.exceptions import ClientError
 
 logger = logging.getLogger(__name__)

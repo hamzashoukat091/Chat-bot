@@ -3,7 +3,7 @@ import logging
 import json
 import textwrap
 from typing import Dict
-from app.utils import get_bedrock_client
+from utils import get_bedrock_client
 
 from langchain_community.vectorstores.pgvector import PGVector
 from langchain_community.embeddings import BedrockEmbeddings

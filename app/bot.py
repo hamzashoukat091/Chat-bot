@@ -1,20 +1,9 @@
 import os
 
-from app.repositories.common import RecordNotFoundError, compose_bot_id
-from app.repositories.custom_bot import (
-    store_bot,
-    update_bot,
-)
-from app.utils import (
-    check_if_file_exists_in_s3,
+from utils import (
     compose_upload_document_s3_path,
     compose_upload_temp_s3_path,
-    compose_upload_temp_s3_prefix,
     delete_file_from_s3,
-    delete_files_with_prefix_from_s3,
-    generate_presigned_url,
-    get_current_time,
-    move_file_in_s3,
 )
 
 DOCUMENT_BUCKET = os.environ.get("DOCUMENT_BUCKET", "bedrock-documents-v1")

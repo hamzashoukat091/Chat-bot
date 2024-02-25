@@ -5,11 +5,11 @@ from database import get_db
 from starlette import status
 from sqlalchemy import and_
 from fastapi.templating import Jinja2Templates
-from usecases.chat import claude, t5
+from chat import t5
 
-from embedding import cohere, hugging
+from embedding import hugging
 
-from route_schema import Bots as SchemaBots, Conversation as SchemaConversation, Message as SchemaMessage
+from route_schema import Bots as SchemaBots, Conversation as SchemaConversation
 from model import Bots as ModelBots, Conversation as ModelConversation, Message as ModelMessage
 
 router = APIRouter()
